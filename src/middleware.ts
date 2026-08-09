@@ -13,7 +13,7 @@ const LOGIN_PATH = "/admin/login";
  * /admin — aqui tratamos apenas da sessão, que é o que esta camada consegue
  * checar de forma barata.
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   if (!isSupabaseConfigured()) {

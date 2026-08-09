@@ -584,6 +584,21 @@ desenvolvimento sempre reporta números piores.
 
 ## Deploy
 
+### Cloudflare Workers
+
+O projeto usa o adaptador OpenNext. Em **Settings → Build**, configure:
+
+- **Build command:** `npm run cf:build`
+- **Deploy command:** `npx @opennextjs/cloudflare deploy`
+
+Cadastre as variáveis `NEXT_PUBLIC_*` em **Build Variables and secrets** e as
+variáveis de runtime em **Variables and Secrets**. A
+`SUPABASE_SERVICE_ROLE_KEY` deve ser cadastrada como secret.
+
+O middleware administrativo permanece em `src/middleware.ts` para usar o
+runtime Edge. Enquanto o OpenNext não suportar Node.js Middleware, não migre
+esse arquivo para `src/proxy.ts`.
+
 ### Vercel (caminho mais curto)
 
 1. Suba o repositório para o GitHub e importe o projeto na Vercel.
