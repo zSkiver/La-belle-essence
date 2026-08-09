@@ -1,0 +1,601 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   Paleta derivada do logotipo: rosé empoeirado, dourado antigo e um marrom
+   quente para o texto. Superfícies claras dão o ar de boutique; blocos escuros
+   entram pontualmente para criar ritmo.
+
+   Contraste verificado sobre --color-surface (#FAF6F2):
+     ink        14.5:1   ink-muted  7.7:1   ink-faint  4.8:1
+     gold-deep   4.7:1   rose-deep  5.2:1
+   --------------------------------------------------------------------------- */
+
+/**
+ * Progresso da rolagem sobre a hero, de 0 a 1. Registrado como número para que
+ * o `calc()` seja resolvido sempre da mesma forma e para garantir o valor
+ * inicial antes do primeiro quadro do JavaScript.
+ */
+@property --hero-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/**
+ * Etapas de entrada da hero. Cada elemento declara em que ponto da rolagem
+ * começa (`--stage-from`) e em quanto tempo se resolve (`--stage-span`); o
+ * `--stage-progress` é derivado desses dois. Se o navegador não computar,
+ * o valor inicial 1 deixa tudo visível — a falha é sempre para o lado seguro.
+ */
+@property --stage-progress {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --stage-from {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --stage-span {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@theme {
+  /* Superfícies */
+  --color-surface: #faf6f2;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #f3eae4;
+  --color-surface-blush: #f7ebe6;
+  --color-surface-contrast: #2e211e;
+  --color-surface-contrast-soft: #3d2c27;
+
+  /* Tinta */
+  --color-ink: #2e211e;
+  --color-ink-muted: #5f4a44;
+  --color-ink-faint: #83685f;
+  --color-ink-inverse: #faf6f2;
+
+  /* Marca */
+  --color-rose: #c98f86;
+  --color-rose-deep: #96574f;
+  --color-rose-tint: #f0dcd6;
+  --color-gold: #c6a15b;
+  --color-gold-deep: #8a6a2f;
+  --color-gold-tint: #f0e3c9;
+  --color-bronze: #7a5a2e;
+  --color-forest: #1f4436;
+
+  /* Traços */
+  --color-line: #e6d8d1;
+  --color-line-strong: #cdb5aa;
+
+  --color-danger: #a63d3d;
+  --color-success: #3f6b4f;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", "Times New Roman", serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --tracking-editorial: 0.24em;
+  --ease-editorial: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --breakpoint-xs: 22.5rem;
+}
+
+/**
+ * Ponteiro fino com hover de verdade — mouse e trackpad, não toque.
+ * Usada para enfeites que só fazem sentido no hover; no toque, a mesma
+ * informação precisa estar visível de outro jeito.
+ */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    scrollbar-gutter: stable;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-rose-tint);
+    color: var(--color-ink);
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Composição editorial
+   --------------------------------------------------------------------------- */
+
+@utility shell {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  max-width: 84rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 2.5rem;
+  }
+
+  @media (width >= 80rem) {
+    padding-inline: 3.5rem;
+  }
+}
+
+@utility eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-editorial);
+  text-transform: uppercase;
+  color: var(--color-gold-deep);
+}
+
+/** Mesma antessala tipográfica, calibrada para blocos escuros. */
+@utility eyebrow-light {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-editorial);
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+@utility hairline {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--color-gold) 60%, transparent),
+    transparent
+  );
+}
+
+/** Moldura inspirada em portais orientais — arco discreto, sem ornamento. */
+@utility portal-frame {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 32%, transparent);
+  border-start-start-radius: 12rem;
+  border-start-end-radius: 12rem;
+  overflow: hidden;
+}
+
+@utility text-balance-tight {
+  text-wrap: balance;
+  letter-spacing: -0.022em;
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento
+   Tudo aqui é desligado por prefers-reduced-motion, no bloco no fim do arquivo.
+   --------------------------------------------------------------------------- */
+
+@keyframes lbe-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+}
+
+@keyframes lbe-sheen {
+  from {
+    transform: translateX(-130%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(230%) skewX(-18deg);
+  }
+}
+
+@keyframes lbe-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* Desloca exatamente a largura de UMA cópia: o laço fica sem emenda
+       qualquer que seja a quantidade de marcas. */
+    transform: translate3d(calc(-100% / var(--marquee-copies, 2)), 0, 0);
+  }
+}
+
+@keyframes lbe-aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes lbe-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0.4rem);
+  }
+}
+
+@keyframes lbe-scale-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes lbe-parallax {
+  from {
+    transform: translateY(-5%) scale(1.1);
+  }
+  to {
+    transform: translateY(7%) scale(1.1);
+  }
+}
+
+@layer components {
+  /* -- Revelação no scroll (IntersectionObserver define data-revealed) ------ */
+
+  .reveal {
+    opacity: 0;
+    transition:
+      opacity 900ms var(--ease-silk),
+      transform 900ms var(--ease-silk),
+      filter 900ms var(--ease-silk);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .reveal[data-variant="up"] {
+    transform: translateY(1.75rem);
+  }
+  .reveal[data-variant="left"] {
+    transform: translateX(-1.75rem);
+  }
+  .reveal[data-variant="right"] {
+    transform: translateX(1.75rem);
+  }
+  .reveal[data-variant="scale"] {
+    transform: scale(0.94);
+  }
+  .reveal[data-variant="blur"] {
+    filter: blur(10px);
+    transform: translateY(1rem);
+  }
+
+  .reveal[data-revealed="true"] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  /* -- Filete dourado sob o texto -----------------------------------------
+     Anima `transform`, não `width`: o filete é desenhado inteiro e revelado
+     por escala, sem provocar recálculo de layout a cada quadro. */
+
+  .gold-underline {
+    position: relative;
+  }
+
+  .gold-underline::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.35rem;
+    height: 1px;
+    background-color: var(--color-gold);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 450ms var(--ease-silk);
+  }
+
+  .gold-underline:hover::after,
+  .gold-underline:focus-visible::after,
+  .group\/card:hover .gold-underline::after,
+  .group\/universe:hover .gold-underline::after {
+    transform: scaleX(1);
+  }
+
+  /* -- Brilho que atravessa o cartão de promoção --------------------------- */
+
+  .sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 45%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      color-mix(in srgb, #fff 62%, transparent) 50%,
+      transparent 100%
+    );
+    transform: translateX(-130%) skewX(-18deg);
+  }
+
+  .group\/promo:hover .sheen::after {
+    animation: lbe-sheen 1100ms var(--ease-silk);
+  }
+
+  /* -- Marquee de marcas --------------------------------------------------- */
+
+  .marquee {
+    display: flex;
+    width: max-content;
+    flex-wrap: nowrap;
+    will-change: transform;
+    animation: lbe-marquee var(--marquee-duration, 42s) linear infinite;
+  }
+
+  .marquee-viewport:hover .marquee,
+  .marquee-viewport:focus-within .marquee {
+    animation-play-state: paused;
+  }
+
+  /* -- Aurora da hero ------------------------------------------------------ */
+
+  .aurora {
+    animation: lbe-aurora 18s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .float-cue {
+    animation: lbe-float 2.8s ease-in-out infinite;
+  }
+
+  /* -- Hero com efeito de rolagem ------------------------------------------
+     Um único número, `--hero-progress` (0 → 1), é escrito pelo JavaScript a
+     cada quadro e comanda todas as camadas. Assim existe apenas uma leitura de
+     layout por quadro, e cada camada anima só `transform` e `opacity`. */
+
+  .hero-track {
+    --hero-progress: 0;
+  }
+
+  /* O quadro recua de leve enquanto o vídeo avança. */
+  .hero-media {
+    transform: scale(calc(1.08 - 0.08 * var(--hero-progress)));
+    will-change: transform;
+  }
+
+  /* O véu começa leve — o vídeo é a estrela — e fecha conforme o texto chega,
+     garantindo o contraste quando há mais o que ler. */
+  .hero-veil {
+    opacity: calc(0.34 + 0.34 * var(--hero-progress));
+  }
+
+  /* Entrada em etapas: cada elemento surge no seu trecho da rolagem. */
+  .hero-stage {
+    --stage-progress: clamp(
+      0,
+      calc((var(--hero-progress) - var(--stage-from)) / var(--stage-span)),
+      1
+    );
+    opacity: var(--stage-progress);
+    transform: translate3d(0, calc((1 - var(--stage-progress)) * 1.5rem), 0);
+    will-change: opacity, transform;
+  }
+
+  /**
+   * Variante com piso: nunca chega a ficar invisível. Usada no wordmark e na
+   * antessala, que compõem o primeiro quadro e não podem sumir de quem abre a
+   * página e não rola.
+   */
+  .hero-stage-soft {
+    --stage-progress: clamp(
+      0,
+      calc((var(--hero-progress) - var(--stage-from)) / var(--stage-span)),
+      1
+    );
+    opacity: calc(0.28 + 0.72 * var(--stage-progress));
+    transform: scale(calc(0.965 + 0.035 * var(--stage-progress)));
+    will-change: opacity, transform;
+  }
+
+  /* O wordmark abre o espacejamento conforme se resolve. */
+  .hero-wordmark {
+    letter-spacing: calc(0.02em - var(--hero-progress) * 0.05em);
+  }
+
+  .hero-rail-fill {
+    transform: scaleY(var(--hero-progress));
+    transform-origin: top center;
+  }
+
+  /* -- Faixas de seção -----------------------------------------------------
+     As quebras entre seções são degradês que nascem e morrem na superfície
+     base, em vez de traços duros. O conteúdo fica na faixa central, já na cor
+     cheia, então o contraste do texto não muda. */
+
+  .band-blush {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-surface-blush) 14%,
+      var(--color-surface-blush) 86%,
+      var(--color-surface) 100%
+    );
+  }
+
+  .band-sunken {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-surface-sunken) 14%,
+      var(--color-surface-sunken) 86%,
+      var(--color-surface) 100%
+    );
+  }
+
+  .band-ink {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-ink) 12%,
+      var(--color-ink) 88%,
+      var(--color-surface) 100%
+    );
+  }
+
+  /* Fecha a página: entra na cor escura e não volta. */
+  .band-into-ink {
+    background-image: linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-ink) 10%,
+      var(--color-ink) 100%
+    );
+  }
+
+  /* -- Preço que troca junto com o volume ---------------------------------- */
+
+  .price-swap {
+    animation: lbe-fade-up 420ms var(--ease-silk);
+  }
+}
+
+/* Efeitos guiados pelo scroll — puro CSS, sem custo de JavaScript.
+   Onde o navegador não suportar, nada acontece e o layout permanece igual. */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    transform-origin: 0 50%;
+    animation: lbe-scale-x linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .parallax-slow {
+    animation: lbe-parallax linear both;
+    animation-timeline: view();
+    animation-range: entry 0% exit 100%;
+  }
+}
+
+@supports (scrollbar-color: black white) {
+  html {
+    scrollbar-color: var(--color-line-strong) var(--color-surface);
+    scrollbar-width: thin;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento reduzido — desliga tudo, inclusive os efeitos contínuos.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  .reveal[data-variant] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  .marquee,
+  .aurora,
+  .float-cue {
+    animation: none !important;
+  }
+
+  .parallax-slow {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* O trilho existe só para dar curso ao efeito. Sem efeito, ele vira uma
+     tela normal — senão sobraria um viewport inteiro de rolagem vazia. */
+  .hero-track {
+    height: 100svh !important;
+  }
+
+  .hero-media,
+  .hero-stage,
+  .hero-stage-soft,
+  .hero-wordmark {
+    transform: none !important;
+    opacity: 1 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .hero-veil {
+    opacity: 0.6 !important;
+  }
+}
