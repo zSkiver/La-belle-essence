@@ -100,7 +100,8 @@ em vez de quebrar.
 | Comando | O que faz |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção |
+| `npm run build` | Build de produção para Cloudflare Workers (OpenNext) |
+| `npm run build:next` | Build padrão do Next.js para Node/Vercel |
 | `npm run start` | Sobe o build de produção |
 | `npm run lint` | ESLint (config oficial do Next + regras do projeto) |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -588,8 +589,8 @@ desenvolvimento sempre reporta números piores.
 
 O projeto usa o adaptador OpenNext. Em **Settings → Build**, configure:
 
-- **Build command:** `npm run cf:build`
-- **Deploy command:** `npx @opennextjs/cloudflare deploy`
+- **Build command:** `npm run build`
+- **Deploy command:** `npx wrangler deploy`
 
 Cadastre as variáveis `NEXT_PUBLIC_*` em **Build Variables and secrets** e as
 variáveis de runtime em **Variables and Secrets**. A
@@ -605,13 +606,13 @@ esse arquivo para `src/proxy.ts`.
 2. Em **Settings → Environment Variables**, cadastre todas as variáveis de `.env.example`.
    Marque `SUPABASE_SERVICE_ROLE_KEY` como sensível e **não** a exponha como `NEXT_PUBLIC_`.
 3. Defina `NEXT_PUBLIC_SITE_URL` com o domínio final — canonical, Open Graph e sitemap dependem dela.
-4. Faça o deploy. Build e start são detectados automaticamente.
+4. Configure o comando de build como `npm run build:next` e faça o deploy.
 
 ### Qualquer host com Node
 
 ```bash
 npm ci
-npm run build
+npm run build:next
 npm run start        # porta 3000 por padrão
 ```
 
